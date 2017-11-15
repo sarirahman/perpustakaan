@@ -18,7 +18,10 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import javax.swing.table.DefaultTableModel;
 
 /**
  *
@@ -29,10 +32,21 @@ public class Form extends javax.swing.JFrame {
     /**
      * Creates new form Form
      */
-    public Form() {
+    private DefaultTableModel model;
+    public Form() throws SQLException {
         initComponents();
         setDate_pinjam();
         setDate_kembali();
+        
+        model = new DefaultTableModel();
+        tabelPeminjaman.setModel(model);
+        model.addColumn("Tgl Peminjaman");
+        model.addColumn("Tgl Pengembalian");
+        model.addColumn("Nim");
+        model.addColumn("Isbn");
+        model.addColumn("Ket");
+        
+        loadData();
     }
     
     public static String toddMMyy(Date day){
@@ -56,6 +70,27 @@ public class Form extends javax.swing.JFrame {
     public void delete_field(){
         inputNim.setText("");
         inputIsbn1.setText("");
+    }
+    
+    public void loadData() throws SQLException{
+        model.getDataVector().removeAllElements();
+        model.fireTableDataChanged();
+        Connection c = database_connection.getKoneksi();
+        
+        String data_pinjam = "select * from peminjaman";
+        PreparedStatement ps = c.prepareStatement(data_pinjam);
+        ResultSet resultSet = ps.executeQuery();
+        
+        while(resultSet.next()){//menelusuri data
+                Object[] o = new Object[5];
+                o[0] = resultSet.getString("tgl_pinjam");
+                o[1] =resultSet.getString("tgl_kembali");
+                o[2] = resultSet.getString("nim");
+                o[3] = resultSet.getString("isbn");
+                o[4] = resultSet.getString("keterangan");
+                model.addRow(o);
+            }
+        
     }
     
     private int cekData_Mahasiswa(String nim) throws SQLException{
@@ -110,8 +145,9 @@ public class Form extends javax.swing.JFrame {
                 statement.setString(3, tgl_pinjam);
                 statement.setString(4, tgl_kembali);
                 statement.execute();
+                loadData();
                 JOptionPane.showMessageDialog(null,"Success","Display Message",JOptionPane.INFORMATION_MESSAGE);
-                c.close();
+                //c.close();
             }
             else
                 JOptionPane.showMessageDialog(null,"Failed","Error Message",JOptionPane.ERROR_MESSAGE);
@@ -145,7 +181,7 @@ public class Form extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         jLabel7 = new javax.swing.JLabel();
         jScrollPane2 = new javax.swing.JScrollPane();
-        jTable2 = new javax.swing.JTable();
+        tabelPeminjaman = new javax.swing.JTable();
 
         jFormattedTextField1.setText("jFormattedTextField1");
 
@@ -189,6 +225,7 @@ public class Form extends javax.swing.JFrame {
         });
 
         inputIsbn1.setToolTipText("");
+        inputIsbn1.setPreferredSize(new java.awt.Dimension(6, 23));
 
         buttonPinjam.setText("Pinjam");
         buttonPinjam.addActionListener(new java.awt.event.ActionListener() {
@@ -201,61 +238,62 @@ public class Form extends javax.swing.JFrame {
 
         jLabel7.setText("jLabel7");
 
-        jTable2.setModel(new javax.swing.table.DefaultTableModel(
+        tabelPeminjaman.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null},
-                {null, null, null, null}
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null},
+                {null, null, null, null, null}
             },
             new String [] {
-                "Title 1", "Title 2", "Title 3", "Title 4"
+                "Title 1", "Title 2", "Title 3", "Title 4", "Title 5"
             }
-        ));
-        jScrollPane2.setViewportView(jTable2);
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, true, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        tabelPeminjaman.setName(""); // NOI18N
+        jScrollPane2.setViewportView(tabelPeminjaman);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel3))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel7)
-                                    .addComponent(jLabel6)
-                                    .addComponent(inputNim, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(buttonPinjam)
-                                    .addComponent(inputIsbn1, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE))
-                                .addGap(0, 0, Short.MAX_VALUE))))
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel4)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
-            .addGroup(layout.createSequentialGroup()
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(0, 72, Short.MAX_VALUE)
+                .addGap(0, 73, Short.MAX_VALUE)
                 .addComponent(jLabel1)
-                .addGap(68, 68, 68))
+                .addGap(67, 67, 67))
+            .addGroup(layout.createSequentialGroup()
+                .addGap(34, 34, 34)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel4)
+                    .addComponent(jLabel5)
+                    .addComponent(jLabel2)
+                    .addComponent(jLabel3))
+                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(buttonPinjam)
+                    .addComponent(jLabel7)
+                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(inputIsbn1, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(inputNim, javax.swing.GroupLayout.PREFERRED_SIZE, 137, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(jLabel6))
+                .addGap(0, 0, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addContainerGap()
+                .addGap(29, 29, 29)
                 .addComponent(jLabel1)
-                .addGap(36, 36, 36)
+                .addGap(18, 18, 18)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel4)
                     .addComponent(jLabel6))
@@ -264,18 +302,18 @@ public class Form extends javax.swing.JFrame {
                     .addComponent(jLabel5)
                     .addComponent(jLabel7))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel2)
-                    .addComponent(inputNim, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(inputNim, javax.swing.GroupLayout.PREFERRED_SIZE, 23, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(inputIsbn1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel3))
-                .addGap(18, 18, 18)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel3)
+                    .addComponent(inputIsbn1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 15, Short.MAX_VALUE)
                 .addComponent(buttonPinjam)
                 .addGap(46, 46, 46)
                 .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 142, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap())
         );
 
         pack();
@@ -286,9 +324,14 @@ public class Form extends javax.swing.JFrame {
     }//GEN-LAST:event_inputNimActionPerformed
 
     private void buttonPinjamActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_buttonPinjamActionPerformed
-        // TODO add your handling code here:        
+        // TODO add your handling code here:
         db_insert();
         delete_field();
+        try {
+            loadData();
+        } catch (SQLException ex) {
+            Logger.getLogger(Form.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }//GEN-LAST:event_buttonPinjamActionPerformed
 
     private void inputNimKeyTyped(java.awt.event.KeyEvent evt) {//GEN-FIRST:event_inputNimKeyTyped
@@ -330,7 +373,11 @@ public class Form extends javax.swing.JFrame {
         
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new Form().setVisible(true);
+                try {
+                    new Form().setVisible(true);
+                } catch (SQLException ex) {
+                    Logger.getLogger(Form.class.getName()).log(Level.SEVERE, null, ex);
+                }
             }
         });
     }
@@ -350,6 +397,6 @@ public class Form extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     private javax.swing.JTable jTable1;
-    private javax.swing.JTable jTable2;
+    private javax.swing.JTable tabelPeminjaman;
     // End of variables declaration//GEN-END:variables
 }
