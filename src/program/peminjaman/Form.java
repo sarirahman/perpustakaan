@@ -35,59 +35,79 @@ public class Form extends javax.swing.JFrame {
     private DefaultTableModel model;
     public Form() throws SQLException {
         initComponents();
+        //memanggil prosedur setDate_pinjam
         setDate_pinjam();
+        //memanggil prosedur setDate_kembali
         setDate_kembali();
-        
+        //membuat objek DefaultTableModel baru
         model = new DefaultTableModel();
+        //set data model dgn model baru
         tabelPeminjaman.setModel(model);
+        //nama-nama kolom untuk tabel
         model.addColumn("Tgl Peminjaman");
         model.addColumn("Tgl Pengembalian");
         model.addColumn("Nim");
         model.addColumn("Isbn");
         model.addColumn("Ket");
-        
+        //memanggil prosedur loadData
         loadData();
     }
     
-    public String toddMMyy(Date day){
+    private String toddMMyy(Date day){
+        //membuat objek simpledateformat baru
         SimpleDateFormat formatter = new SimpleDateFormat("dd-MM-yyyy");
+        //memformat parameter day sesuai dengan dd-MM-yyyy
         String date = formatter.format(day);
         return date;
     }
 
-    public void setDate_pinjam(){
+    private void setDate_pinjam(){
+        //membuat objek tanggal today
         Date today = new Date();
+        //set tanggal ke label6
         jLabel6.setText(toddMMyy(today));
     }
     
-    public void setDate_kembali(){
+    private void setDate_kembali(){
+        //mengembalikan nilai tanggal hari ini
         Calendar cal = Calendar.getInstance();
+        //menambah waktu hari -> +3 hari
         cal.add(Calendar.DAY_OF_MONTH, 3);
+        //mengembalikan objek tanggal dari nilai calender
         Date tgl_kembali = cal.getTime();
+        //set tanggal le label 7
         jLabel7.setText(toddMMyy(tgl_kembali)); 
     }
     
-    public void delete_field(){
+    private void delete_field(){
         inputNim.setText("");
         inputIsbn1.setText("");
     }
     
-    public void loadData() throws SQLException{
+    private void loadData() throws SQLException{
+        
         model.getDataVector().removeAllElements();
+        //menampilkan ulang / redraw perubahan data pada tabel peminjaman_buku
         model.fireTableDataChanged();
+        //koneksi database
         Connection c = database_connection.getKoneksi();
         
         String data_pinjam = "select * from peminjaman";
+        //mengeksekusi query
         PreparedStatement ps = c.prepareStatement(data_pinjam);
+        //menyimpan hasil eksekusi di resultset
         ResultSet resultSet = ps.executeQuery();
-        
-        while(resultSet.next()){//menelusuri data
+        //menelusuri data
+        while(resultSet.next()){
+            //membuat object o
                 Object[] o = new Object[5];
+                //mengambil nilai dari database
                 o[0] = resultSet.getString("tgl_pinjam");
                 o[1] = resultSet.getString("tgl_kembali");
                 o[2] = resultSet.getString("nim");
                 o[3] = resultSet.getString("isbn");
                 o[4] = resultSet.getString("keterangan");
+                //menambahkan tiap baris 
                 model.addRow(o);
             }
         
@@ -100,12 +120,14 @@ public class Form extends javax.swing.JFrame {
         Connection c = database_connection.getKoneksi();
         //memililih tabel mahasiswa
         data_mhs = "select nim from mahasiswa where nim = ?";
+        //mengekseskusi query
         PreparedStatement ps = c.prepareStatement(data_mhs);
+        //eksekusi dengan memilih nim yang diinputkan
         ps.setString(1, nim);
         //hasil pencarian disimpan di resultset
         ResultSet resultSet = ps.executeQuery();
         //mengecek keberadaan data yang dicari
-        if(resultSet.next())
+        if(resultSet.next()) //return berupa boolean -> true
             return 1;
         else
             return 0;
@@ -114,18 +136,24 @@ public class Form extends javax.swing.JFrame {
     private int cekData_Buku(String isbn) throws SQLException{
         String data_buku;
         int berhasil;
+        //koneksi ke database
         Connection c = database_connection.getKoneksi();
+        //memilih tabel buku
         data_buku = "select isbn from buku where isbn = ?";
+        //mengeksekusi query
         PreparedStatement ps = c.prepareStatement(data_buku);
+        //eksekusi dengan memilih isbn yang diinputkan
         ps.setString(1, isbn);
+        //hasil pencarian disimpan di resultset
         ResultSet resultSet = ps.executeQuery();
-        if(resultSet.next())
+        //mengecek keberadaan data yangdicari
+        if(resultSet.next()) //return berupa boolean -> true
             return 1;
         else
             return 0;
     }
     
-    public void db_insert(){
+    private void db_insert(){
         String nim, isbn, tgl_pinjam, tgl_kembali;
         nim = inputNim.getText();
         isbn = inputIsbn1.getText();
@@ -133,22 +161,32 @@ public class Form extends javax.swing.JFrame {
         tgl_kembali = jLabel7.getText();
         
         try {
+            //koneksi ke database
             Connection c = database_connection.getKoneksi();
             int cek_mhs, cek_buku;
+            //mengecek nim yang diinputkan pada fungsi cekData_Mahasiswa
             cek_mhs = cekData_Mahasiswa(nim);
+            //mengecek isbn yang diinputkan pada fungsi cekData_Buku
             cek_buku = cekData_Buku(isbn);
+            //jika nim dan isbn yang diinputkan ada pada database maka
             if(cek_mhs == 1 && cek_buku == 1){
+                //input ke database
                 String sql = "insert into peminjaman (nim, isbn, tgl_pinjam, tgl_kembali) values (?,?,?,?)";
-                PreparedStatement statement =  c.prepareStatement(sql);
-                statement.setString(1, nim);
-                statement.setString(2, isbn);
-                statement.setString(3, tgl_pinjam);
-                statement.setString(4, tgl_kembali);
-                statement.execute();
+                //mengeksekusi query
+                PreparedStatement ps =  c.prepareStatement(sql);
+                //eksekusi dgn menginputkan input dari user
+                ps.setString(1, nim);
+                ps.setString(2, isbn);
+                ps.setString(3, tgl_pinjam);
+                ps.setString(4, tgl_kembali);
+                ps.execute();
+                //memanggil prosedur loadData
                 loadData();
+                //menampilkan message box
                 JOptionPane.showMessageDialog(null,"Success","Display Message",JOptionPane.INFORMATION_MESSAGE);
                 //c.close();
             }
+            //jika tudak
             else
                 JOptionPane.showMessageDialog(null,"Failed","Error Message",JOptionPane.ERROR_MESSAGE);
             
@@ -265,7 +303,7 @@ public class Form extends javax.swing.JFrame {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 480, Short.MAX_VALUE)
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.DEFAULT_SIZE, 476, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)

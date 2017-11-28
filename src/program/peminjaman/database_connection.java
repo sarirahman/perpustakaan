@@ -14,13 +14,13 @@ import java.sql.SQLException;
  */
 public class database_connection {
     private static Connection koneksi;
-    
+    // dengan static, pada saat kelas lain akan mengakses kelas ini, tidak harus membuat objek kelas
     public static Connection getKoneksi(){
         if(koneksi == null){
             try {
                 String url = "jdbc:mysql://localhost:3306/perpustakaan";
                 String user = "root";
-                String password = "";   
+                String password = "";
                 DriverManager.registerDriver(new com.mysql.jdbc.Driver());
                 koneksi = DriverManager.getConnection(url, user, password);
                 System.out.println("Berhasil");
